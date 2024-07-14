@@ -166,6 +166,18 @@
     /* 自定义进度条的颜色 */
 }
 
+.progress-bar.red {
+  background-color: red;
+}
+
+.progress-bar.orange {
+  background-color: orange;
+}
+
+.progress-bar.green {
+  background-color: green;
+}
+
 #multiplicationTable {
     margin-top: 2rem;
     text-align: center;

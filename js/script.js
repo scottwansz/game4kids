@@ -3,43 +3,13 @@ let correctAnswer = 0;
 
 const totalQuestions = 45; // 总题量
 
-const level_1 = [];
-const level_2 = [];
-const level_3 = [];
-const level_4 = [];
-const level_5 = [];
-const level_6 = [];
-
 // 生成题目并分配难度
 let allQuestions = [];
 for (let i = 1; i <= 9; i++) {
   for (let j = 1; j <= i; j++) {
     allQuestions.push({ question: `${j} x ${i}`, answer: i * j });
-    // if (i === 1 || j === 1) {
-    //   // 将1乘n和m乘1的情况视为最简单
-    //   level_1.push({ question: `${i} x ${j}`, answer: i * j });
-    // } else if (i === 5) {
-    //   level_2.push({ question: `${i} x ${j}`, answer: i * j });
-    // } else if (j === 5) {
-    //   level_3.push({ question: `${i} x ${j}`, answer: i * j });
-    // } else if (i <= 5 && j <= 5) {
-    //   level_4.push({ question: `${i} x ${j}`, answer: i * j });
-    // } else if (i <= 7 && j <= 7) {
-    //   level_5.push({ question: `${i} x ${j}`, answer: i * j });
-    // } else {
-    //   level_6.push({ question: `${i} x ${j}`, answer: i * j });
-    // }
   }
 }
-
-// let allQuestions = [
-//   ...level_1,
-//   ...level_2,
-//   ...level_3,
-//   ...level_4,
-//   ...level_5,
-//   ...level_6,
-// ];
 
 // 修改getNextQuestion函数以确保不会返回已掌握的题目
 // function getNextQuestion() {
@@ -53,23 +23,26 @@ for (let i = 1; i <= 9; i++) {
 // }
 
 // 初始化语音识别
-// const recognition = new webkitSpeechRecognition();
-// recognition.lang = 'zh-CN';
-// recognition.continuous = true;
-// recognition.interimResults = false;
+const recognition = new webkitSpeechRecognition();
+// recognition.lang = "zh-CN";
+recognition.continuous = true;
+recognition.interimResults = false;
 
 // 创建语音播报函数
 function speak(text) {
   const utterance = new SpeechSynthesisUtterance(text);
-  // recognition.stop();
+  utterance.lang = 'en-US';
+
+  recognition.stop();
   window.speechSynthesis.speak(utterance);
-  // 播报完成后重新开启语音识别
-  // setTimeout(() => {
-  //     recognition.start();
-  // }, 2000); // 假设语音播报大约需要1秒
+  // 播报完成后重新开启语音识别;
+  setTimeout(() => {
+    recognition.start();
+  }, 3000); // 假设语音播报大约需要1秒
 }
 
 function handleCellClick(expression) {
+  clearResult();
   // 分解表达式获取操作数
   const [num1, num2] = expression.split(" x ").map(Number);
 
@@ -89,10 +62,16 @@ function updateMultiplicationTable() {
   for (let i = 1; i <= 9; i++) {
     table += "<tr>";
     for (let j = 1; j <= 9; j++) {
-      let expression = `${j} x ${i}`;
-      let cellClass = correctAnswers[expression] ? "correct-answer" : "";
-      // 添加 onclick 事件监听器
-      table += `<td class="${cellClass}" onclick="handleCellClick('${expression}')">${expression}</td>`;
+      if (j <= i) {
+        // 只有当 j 小于或等于 i 时才生成 td 元素
+        let expression = `${j} x ${i}`;
+        let cellClass = correctAnswers[expression] ? "correct-answer" : "";
+        // 添加 onclick 事件监听器
+        table += `<td class="${cellClass}" onclick="handleCellClick('${expression}')">${expression}</td>`;
+      } else {
+        // 当 j 大于 i 时，生成一个没有 onclick 的 td，且设置为不可见
+        table += `<td class="d-none"></td>`;
+      }
     }
     table += "</tr>";
   }
@@ -115,7 +94,7 @@ function generateQuestion(n1, n2) {
     const item = allQuestions.shift();
 
     if (item) {
-      console.log("Generating question from item:", item);
+      // console.log("Generating question from item:", item);
       const question = item.question;
       [num1, num2] = question.split(" x ").map(Number);
     } else {
@@ -130,7 +109,7 @@ function generateQuestion(n1, n2) {
   // 更新题目显示
   questionDisplay.textContent = `${num1} x ${num2} =`;
 
-  speak(`${num1} 乘 ${num2}`);
+  speak(`What's ${num1} times ${num2} ?`);
 
   return num1 * num2;
 }
@@ -138,18 +117,32 @@ function generateQuestion(n1, n2) {
 function clearResult() {
   const resultEl = document.getElementById("result");
   resultEl.textContent = "";
+  resultEl.classList.remove("correct");
+  resultEl.classList.remove("incorrect");
 }
 
 function updateProgressBar() {
-  console.log("Updating progress bar..."); // 添加这行用于调试
   const progressBar = document.querySelector(".progress-bar");
   const percentage = (
     (Object.keys(correctAnswers).length / totalQuestions) *
     100
   ).toFixed(1);
+  
   progressBar.style.width = `${percentage}%`;
   progressBar.textContent = `${percentage}`;
   progressBar.setAttribute("aria-valuenow", percentage);
+
+  // 根据值改变颜色
+  if (percentage < 20) {
+    progressBar.classList.add("red");
+    progressBar.classList.remove("orange", "green");
+  } else if (percentage >= 20 && percentage <= 60) {
+    progressBar.classList.add("orange");
+    progressBar.classList.remove("red", "green");
+  } else {
+    progressBar.classList.add("green");
+    progressBar.classList.remove("red", "orange");
+  }
 }
 
 function updateDisplay(value) {
@@ -253,50 +246,48 @@ document.addEventListener("DOMContentLoaded", function () {
   const calculatorButtons = document.querySelectorAll(".calculator-button");
   const submitBtn = document.getElementById("submitBtn");
   const resultEl = document.getElementById("result");
-  const scoreEl = document.getElementById("score");
   const fingersDisplay = document.getElementById("fingersDisplay");
-  let score = 0;
 
-  // recognition.onresult = function(event) {
-  //     const transcript = Array.from(event.results)
-  //         .map(result => result[0])
-  //         .map(result => result.transcript)
-  //         .join('');
+  recognition.onresult = function (event) {
+    const transcript = Array.from(event.results)
+      .map((result) => result[0])
+      .map((result) => result.transcript)
+      .join("");
 
-  //     console.log('Transcript:', transcript);
+    console.log("Transcript:", transcript);
 
-  //     // 提取数字
-  //     const numbers = transcript.match(/\d+/g);
-  //     if (numbers) {
-  //         console.log('Transcript numbers:', numbers);
-  //         // 将提取到的数字转换为整数并连接起来
-  //         const numericInput = numbers[numbers.length - 1];
-  //         answerInput.value += numericInput;
+    // 提取数字
+    const numbers = transcript.match(/\d+/g);
+    if (numbers) {
+      console.log("Transcript numbers:", numbers);
+      // 将提取到的数字转换为整数并连接起来
+      const numericInput = numbers[numbers.length - 1];
+      answerInput.value += numericInput;
 
-  //         console.log('answerInput.value:', answerInput.value);
+      console.log("answerInput.value:", answerInput.value);
 
-  //         // 如果输入框中有完整的数字，则提交答案
-  //         if (numericInput.trim().length > 0) {
-  //             submitBtn.click();
-  //         }
-  //     }
+      // 如果输入框中有完整的数字，则提交答案
+      if (numericInput.trim().length > 0) {
+        submitBtn.click();
+      }
+    }
 
-  //     // 检查整个文本是否为数字
-  //     // if (/^\d+$/.test(transcript)) {
-  //     //     answerInput.value += transcript;
+    // 检查整个文本是否为数字
+    // if (/^\d+$/.test(transcript)) {
+    //     answerInput.value += transcript;
 
-  //     //     // 如果输入框中有完整的数字，则提交答案
-  //     //     if (transcript.trim().length > 0) {
-  //     //         submitBtn.click();
-  //     //     }
-  //     // }
-  // };
+    //     // 如果输入框中有完整的数字，则提交答案
+    //     if (transcript.trim().length > 0) {
+    //         submitBtn.click();
+    //     }
+    // }
+  };
 
-  // recognition.onend = function() {
-  //     console.log('Recognition ended');
-  //     // recognition.start();
-  //     // console.log('Recognition started');
-  // };
+  recognition.onend = function() {
+      console.log('Recognition ended');
+      // recognition.start();
+      // console.log('Recognition started');
+  };
 
   loadProgress(); // 页面加载时加载保存的进度
   updateAllQuestions(); // 更新题目列表，移除已掌握的题目
@@ -328,9 +319,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // console.log(`User answer: ${userAnswer}`);
 
     if (userAnswer === correctAnswer) {
-      updateProgressBar();
-      score++;
-
       resultEl.textContent = "Correct!";
       resultEl.classList.add("correct"); // 添加正确类
       resultEl.classList.remove("incorrect"); // 移除错误类，以防之前是错误的
@@ -339,6 +327,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const expression = questionDisplay.textContent.split("=")[0].trim();
       correctAnswers[expression] = true;
       updateMultiplicationTable();
+      updateProgressBar();
       saveProgress(); // 正确回答后保存进度
 
       // recognition.stop();
