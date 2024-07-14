@@ -1,0 +1,193 @@
+.fingers-display .divider {
+    position: relative;
+    width: 100%;
+    height: 0;
+    border-top: 2px dashed green;
+}
+
+.container-fluid {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    /* 修改为分配空间 */
+    align-items: center;
+    /* 添加垂直居中 */
+    height: 100vh;
+    overflow-x: hidden;
+    /* 防止水平滚动条出现 */
+}
+
+.game-controls {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    width: 15%;
+    /* 调整宽度以适应布局需求 */
+    /* 添加下面的属性以允许计算器扩展 */
+    flex-shrink: 0;
+    /* 防止缩小 */
+    flex-grow: 0;
+    /* 不允许增长 */
+}
+
+#calculatorDisplay {
+    display: flex;
+    align-items: center;
+    /* 垂直居中对齐 */
+    font-weight: bold;
+}
+
+#questionDisplay {
+    flex: 2;
+    /* 占据2份空间 */
+    font-size: 1.2em;
+    /* 调整字体大小以匹配输入框 */
+    white-space: nowrap;
+    /* 确保文本不会换行 */
+    margin-right: 5px;
+    /* 与输入框之间留出一些空隙 */
+    text-align: center;
+    /* 靠右对齐 */
+}
+
+#answerInput {
+    flex: 1;
+    /* 占据1份空间 */
+    width: 100%;
+    /* 确保输入框占据其分配的所有空间 */
+    font-weight: bold;
+}
+
+.calculator-buttons-container {
+    display: flex;
+    flex-wrap: wrap;
+    /* 允许按钮换行 */
+    justify-content: space-between;
+    gap: 5px;
+    /* 按钮间的间隙 */
+}
+
+/* 普通按钮 */
+.calculator-button {
+    /* flex: 1; 默认占据一列 */
+    width: calc(33.33% - 10px);
+    /* 减去两边的gap */
+    font-weight: bold;
+}
+
+/* 清除键 */
+.calculator-button[data-action="clear"] {
+    /* flex: 2; 占据两列 */
+}
+
+.correct:before {
+    content: "\2713";
+    /* Unicode 对勾 */
+    color: green;
+    margin-right: 5px;
+}
+
+.incorrect:before {
+    content: "\2717";
+    /* Unicode 叉 */
+    color: red;
+    margin-right: 5px;
+}
+
+.fingers-display {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    /* 确保列不换行 */
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+
+    /* 下面的属性用于分配空间 */
+    flex-grow: 1;
+    /* 允许手指展示区扩展以填充可用空间 */
+    flex-basis: 0;
+    /* 初始基础宽度为0，允许扩展 */
+    max-width: calc(85% - 2rem);
+    /* 限制最大宽度 */
+}
+
+.fingers-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-right: 5px;
+    /* 或者使用 auto margin 来平均分布列 */
+    flex-shrink: 0;
+    /* 防止列缩小 */
+}
+
+.fingers-column img {
+    max-width: 100%;
+    /* 确保图片宽度不超过其容器 */
+    max-height: 100px;
+    /* 减小图片高度 */
+    object-fit: contain;
+}
+
+.fingers-column:nth-child(5) {
+  border-right: 2px dashed green;
+}
+
+.column-number {
+    display: block;
+    text-align: center;
+    font-size: 2em;
+    margin-bottom: 5px;
+    color: #afaeae;
+    font-weight: bold;
+}
+
+.cumulative-sum {
+    font-size: 2em;
+    /* Large font size */
+    font-weight: bold;
+    /* Bold font */
+    color: rgb(235, 136, 136);
+    /* Bright red color */
+}
+
+.progress {
+    height: 20px;
+    /* 调整进度条的高度 */
+    margin-top: 1rem;
+    /* 进度条与分数之间的间距 */
+}
+
+.progress-bar {
+    background-color: #007bff;
+    /* 自定义进度条的颜色 */
+}
+
+#multiplicationTable {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+#multiplicationTable table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#multiplicationTable td,
+#multiplicationTable th {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+#multiplicationTable tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.correct-answer {
+    background-color: #aaffaa;
+    /* 选择一个适合的绿色 */
+}
