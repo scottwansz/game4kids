@@ -3,6 +3,14 @@ let correctAnswer = 0;
 
 const totalQuestions = 45; // 总题量
 
+let examMode = false;
+let examScores = {};
+let currentQuestion = null;
+let timerId = null;
+let timerRunning = false;
+let timeRemaining = 30;
+let timerInterval;
+
 // 生成题目并分配难度
 let allQuestions = [];
 for (let i = 1; i <= 9; i++) {
@@ -31,7 +39,7 @@ recognition.interimResults = false;
 // 创建语音播报函数
 function speak(text) {
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-US';
+  utterance.lang = "en-US";
 
   recognition.stop();
   window.speechSynthesis.speak(utterance);
@@ -127,7 +135,7 @@ function updateProgressBar() {
     (Object.keys(correctAnswers).length / totalQuestions) *
     100
   ).toFixed(1);
-  
+
   progressBar.style.width = `${percentage}%`;
   progressBar.textContent = `${percentage}`;
   progressBar.setAttribute("aria-valuenow", percentage);
@@ -240,6 +248,40 @@ function updateAllQuestions() {
   );
 }
 
+// 启动计时器
+function startTimer() {
+  if (!timerRunning) {
+    timerRunning = true;
+    timerInterval = setInterval(() => {
+      if (timeRemaining > 0) {
+        timeRemaining--;
+        updateTimerDisplay();
+      } else {
+        stopTimer();
+      }
+    }, 1000);
+  }
+}
+
+// 更新计时器显示
+function updateTimerDisplay() {
+  // 获取计时器显示元素
+  const timerDisplay = document.getElementById("timer");
+  let minutes = Math.floor(timeRemaining / 60);
+  let seconds = timeRemaining % 60;
+  timerDisplay.textContent = `${minutes}:${seconds
+    .toString()
+    .padStart(2, "0")}`;
+}
+
+// 停止计时器
+function stopTimer() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timeRemaining = 30; // 重置时间
+  updateTimerDisplay();
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   const questionDisplay = document.getElementById("questionDisplay");
   const answerInput = document.getElementById("answerInput");
@@ -247,6 +289,29 @@ document.addEventListener("DOMContentLoaded", function () {
   const submitBtn = document.getElementById("submitBtn");
   const resultEl = document.getElementById("result");
   const fingersDisplay = document.getElementById("fingersDisplay");
+
+  // 获取考试模式按钮
+  const examModeButton = document.getElementById("examModeButton");
+  const timerDisplay = document.getElementById('timerDisplay');
+  timerDisplay.style.display = "none";
+
+  // 添加点击事件监听器
+  examModeButton.addEventListener("click", () => {
+    examMode = !examMode; // 切换考试模式
+
+    // 根据考试模式的状态显示或隐藏手指图形
+    if (examMode) {
+      // 进入考试模式
+      fingersDisplay.style.display = "none"; // 隐藏手指图形
+      timerDisplay.style.display = "block";
+      startTimer(); // 启动计时器
+    } else {
+      // 退出考试模式
+      fingersDisplay.style.display = "flex"; // 显示手指图形
+      timerDisplay.style.display = "none";
+      stopTimer(); // 停止计时器
+    }
+  });
 
   recognition.onresult = function (event) {
     const transcript = Array.from(event.results)
@@ -283,10 +348,10 @@ document.addEventListener("DOMContentLoaded", function () {
     // }
   };
 
-  recognition.onend = function() {
-      console.log('Recognition ended');
-      // recognition.start();
-      // console.log('Recognition started');
+  recognition.onend = function () {
+    console.log("Recognition ended");
+    // recognition.start();
+    // console.log('Recognition started');
   };
 
   loadProgress(); // 页面加载时加载保存的进度
