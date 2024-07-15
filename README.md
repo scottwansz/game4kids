@@ -2,12 +2,12 @@
 game for kids to learn math
 
 ## Feature list:
-- [x] Register and login
+- [ ] Register and login
 - [x] Learning multiplication table
 - [x] Practice mode
-- [x] Exame mode
-- [x] Timer
+- [ ] Exame mode
+- [ ] Timer
 - [x] Complete percentage of the game
-- [x] Leaderboard
+- [ ] Leaderboard
 - [x] Speach and voice recognition
-- [x] Congratulation message with progress
+- [ ] Congratulation message with progress
