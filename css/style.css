@@ -10,7 +10,7 @@
     flex-direction: row;
     justify-content: center;
     /* 修改为分配空间 */
-    align-items: center;
+    align-items: start;
     /* 添加垂直居中 */
     height: 100vh;
     overflow-x: hidden;

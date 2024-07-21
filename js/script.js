@@ -1,5 +1,6 @@
 let correctAnswers = {};
-let correctAnswer = 0;
+let testCorrectAnswers = {};
+let correctAnswer = 0; // 存储当前题目的正确答案
 
 const totalQuestions = 45; // 总题量
 
@@ -11,13 +12,7 @@ let timerRunning = false;
 let timeRemaining = 30;
 let timerInterval;
 
-// 生成题目并分配难度
 let allQuestions = [];
-for (let i = 1; i <= 9; i++) {
-  for (let j = 1; j <= i; j++) {
-    allQuestions.push({ question: `${j} x ${i}`, answer: i * j });
-  }
-}
 
 // 修改getNextQuestion函数以确保不会返回已掌握的题目
 // function getNextQuestion() {
@@ -73,7 +68,13 @@ function updateMultiplicationTable() {
       if (j <= i) {
         // 只有当 j 小于或等于 i 时才生成 td 元素
         let expression = `${j} x ${i}`;
-        let cellClass = correctAnswers[expression] ? "correct-answer" : "";
+
+        let cellClass = "";
+        if (examMode) {
+          cellClass = testCorrectAnswers[expression] ? "correct-answer" : "";
+        } else {
+          cellClass = correctAnswers[expression] ? "correct-answer" : "";
+        }
         // 添加 onclick 事件监听器
         table += `<td class="${cellClass}" onclick="handleCellClick('${expression}')">${expression}</td>`;
       } else {
@@ -131,10 +132,11 @@ function clearResult() {
 
 function updateProgressBar() {
   const progressBar = document.querySelector(".progress-bar");
-  const percentage = (
-    (Object.keys(correctAnswers).length / totalQuestions) *
-    100
-  ).toFixed(1);
+  const percentage = examMode
+    ? ((Object.keys(testCorrectAnswers).length / totalQuestions) * 100).toFixed(
+        1
+      )
+    : ((Object.keys(correctAnswers).length / totalQuestions) * 100).toFixed(1);
 
   progressBar.style.width = `${percentage}%`;
   progressBar.textContent = `${percentage}`;
@@ -231,25 +233,32 @@ function showFingers(m, n) {
 // 当问题被正确回答时，将正确答案保存到localStorage
 function saveProgress() {
   localStorage.setItem("correctAnswers", JSON.stringify(correctAnswers));
+  localStorage.setItem(
+    "testCorrectAnswers",
+    JSON.stringify(testCorrectAnswers)
+  );
 }
 
 // 页面加载时从localStorage加载正确答案
 function loadProgress() {
   const savedAnswers = localStorage.getItem("correctAnswers");
-  if (savedAnswers) {
-    correctAnswers = JSON.parse(savedAnswers);
-  }
+  const savedTestAnswers = localStorage.getItem("testCorrectAnswers");
+  console.log("savedAnswers:", correctAnswers);
+  console.log("savedTestAnswers:", testCorrectAnswers);
+  correctAnswers = savedAnswers ? JSON.parse(savedAnswers) : {};
+  testCorrectAnswers = savedTestAnswers ? JSON.parse(savedTestAnswers) : {};
 }
 
 // 更新allQuestions数组，使其只包含未掌握的题目
 function updateAllQuestions() {
-  allQuestions = allQuestions.filter(
-    (question) => !correctAnswers[question.question]
-  );
+  allQuestions = examMode
+    ? allQuestions.filter((question) => !testCorrectAnswers[question.question])
+    : allQuestions.filter((question) => !correctAnswers[question.question]);
 }
 
 // 启动计时器
 function startTimer() {
+  timeRemaining = 30;
   if (!timerRunning) {
     timerRunning = true;
     timerInterval = setInterval(() => {
@@ -257,7 +266,8 @@ function startTimer() {
         timeRemaining--;
         updateTimerDisplay();
       } else {
-        stopTimer();
+        restartTimer();
+        correctAnswer = generateQuestion();
       }
     }, 1000);
   }
@@ -282,6 +292,28 @@ function stopTimer() {
   updateTimerDisplay();
 }
 
+function restartTimer() {
+  stopTimer();
+  startTimer();
+}
+
+function reloadData() {
+
+  // 生成题目并分配难度
+  allQuestions = [];
+  for (let i = 1; i <= 9; i++) {
+    for (let j = 1; j <= i; j++) {
+      allQuestions.push({ question: `${j} x ${i}`, answer: i * j });
+    }
+  }
+
+  loadProgress(); // 页面加载时加载保存的进度
+  updateAllQuestions(); // 更新题目列表，移除已掌握的题目
+  updateProgressBar();
+  updateMultiplicationTable();
+  correctAnswer = generateQuestion();
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   const questionDisplay = document.getElementById("questionDisplay");
   const answerInput = document.getElementById("answerInput");
@@ -292,25 +324,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // 获取考试模式按钮
   const examModeButton = document.getElementById("examModeButton");
-  const timerDisplay = document.getElementById('timerDisplay');
-  timerDisplay.style.display = "none";
+  const timerDisplay = document.getElementById("timerDisplay");
+
+  reloadData();
 
   // 添加点击事件监听器
   examModeButton.addEventListener("click", () => {
     examMode = !examMode; // 切换考试模式
 
-    // 根据考试模式的状态显示或隐藏手指图形
-    if (examMode) {
-      // 进入考试模式
-      fingersDisplay.style.display = "none"; // 隐藏手指图形
-      timerDisplay.style.display = "block";
-      startTimer(); // 启动计时器
-    } else {
-      // 退出考试模式
-      fingersDisplay.style.display = "flex"; // 显示手指图形
-      timerDisplay.style.display = "none";
-      stopTimer(); // 停止计时器
-    }
+    examModeButton.textContent = examMode ? "Exit Exam Mode" : "Exam Mode";
+
+    timerDisplay.classList.toggle("d-none", !examMode);
+    fingersDisplay.classList.toggle("d-none", examMode);
+
+    reloadData();
+    restartTimer();
   });
 
   recognition.onresult = function (event) {
@@ -354,11 +382,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // console.log('Recognition started');
   };
 
-  loadProgress(); // 页面加载时加载保存的进度
-  updateAllQuestions(); // 更新题目列表，移除已掌握的题目
-  updateProgressBar();
-  updateMultiplicationTable();
-
   calculatorButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const action = button.dataset.action;
@@ -371,8 +394,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   });
-
-  correctAnswer = generateQuestion();
 
   // // 开始监听
   // recognition.start();
@@ -390,14 +411,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // 更新乘法表显示
       const expression = questionDisplay.textContent.split("=")[0].trim();
-      correctAnswers[expression] = true;
+      if (examMode) {
+        testCorrectAnswers[expression] = true;
+      } else {
+        correctAnswers[expression] = true;
+      }
       updateMultiplicationTable();
       updateProgressBar();
       saveProgress(); // 正确回答后保存进度
 
-      // recognition.stop();
       correctAnswer = generateQuestion();
-      // recognition.start();
+      if (examMode) {
+        restartTimer();
+      }
     } else {
       resultEl.textContent = "Try again.";
       resultEl.classList.add("incorrect"); // 添加错误类
@@ -405,6 +431,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     answerInput.value = "";
+  });
+
+  const btnSkip = document.querySelector("#skipBtn");
+  btnSkip.addEventListener("click", () => {
+    saveProgress();
+    correctAnswer = generateQuestion();
+    restartTimer();
   });
 
   answerInput.addEventListener("keydown", (e) => {
@@ -415,8 +448,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   document.getElementById("resetButton").addEventListener("click", function () {
     // 清空已掌握的题目列表
-    correctAnswers = {};
-    localStorage.removeItem("correctAnswers"); // 清除localStorage中的数据
+    if (examMode) {
+      testCorrectAnswers = {};
+      localStorage.removeItem("testCorrectAnswers"); // 清除localStorage中的数据
+    } else {
+      correctAnswers = {};
+      localStorage.removeItem("correctAnswers"); // 清除localStorage中的数据
+    }
 
     // 更新题目列表，确保所有题目都可以再次出现
     updateAllQuestions();
