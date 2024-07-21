@@ -1,5 +1,16 @@
-let correctAnswers = {};
-let testCorrectAnswers = {};
+let userAnswers = {
+  practice: {
+    correctAnswers: {},
+    notAnswered: {},
+  },
+  exam: {
+    correctAnswers: {},
+    notAnswered: {},
+  },
+}
+
+let correctAnswers = userAnswers.practice.correctAnswers;
+
 let correctAnswer = 0; // 存储当前题目的正确答案
 
 const totalQuestions = 45; // 总题量
@@ -13,17 +24,6 @@ let timeRemaining = 30;
 let timerInterval;
 
 let allQuestions = [];
-
-// 修改getNextQuestion函数以确保不会返回已掌握的题目
-// function getNextQuestion() {
-//   updateAllQuestions(); // 确保allQuestions只包含未掌握的题目
-//   if (allQuestions.length > 0) {
-//     return allQuestions.shift();
-//   } else {
-//     // 如果所有题目都已掌握，可以考虑重置或提示用户已完成所有题目
-//     return null;
-//   }
-// }
 
 // 初始化语音识别
 const recognition = new webkitSpeechRecognition();
@@ -70,11 +70,7 @@ function updateMultiplicationTable() {
         let expression = `${j} x ${i}`;
 
         let cellClass = "";
-        if (examMode) {
-          cellClass = testCorrectAnswers[expression] ? "correct-answer" : "";
-        } else {
-          cellClass = correctAnswers[expression] ? "correct-answer" : "";
-        }
+        cellClass = correctAnswers[expression] ? "correct-answer" : "";
         // 添加 onclick 事件监听器
         table += `<td class="${cellClass}" onclick="handleCellClick('${expression}')">${expression}</td>`;
       } else {
@@ -132,11 +128,7 @@ function clearResult() {
 
 function updateProgressBar() {
   const progressBar = document.querySelector(".progress-bar");
-  const percentage = examMode
-    ? ((Object.keys(testCorrectAnswers).length / totalQuestions) * 100).toFixed(
-        1
-      )
-    : ((Object.keys(correctAnswers).length / totalQuestions) * 100).toFixed(1);
+  const percentage = ((Object.keys(correctAnswers).length / totalQuestions) * 100).toFixed(1);
 
   progressBar.style.width = `${percentage}%`;
   progressBar.textContent = `${percentage}`;
@@ -232,28 +224,27 @@ function showFingers(m, n) {
 
 // 当问题被正确回答时，将正确答案保存到localStorage
 function saveProgress() {
-  localStorage.setItem("correctAnswers", JSON.stringify(correctAnswers));
-  localStorage.setItem(
-    "testCorrectAnswers",
-    JSON.stringify(testCorrectAnswers)
-  );
+
+  if(examMode){
+    userAnswers.exam.correctAnswers = correctAnswers;
+  } else {
+    userAnswers.practice.correctAnswers = correctAnswers;
+  }
+
+  console.log("saveProgress:", userAnswers);
+
+  localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
 }
 
 // 页面加载时从localStorage加载正确答案
 function loadProgress() {
-  const savedAnswers = localStorage.getItem("correctAnswers");
-  const savedTestAnswers = localStorage.getItem("testCorrectAnswers");
-  console.log("savedAnswers:", correctAnswers);
-  console.log("savedTestAnswers:", testCorrectAnswers);
-  correctAnswers = savedAnswers ? JSON.parse(savedAnswers) : {};
-  testCorrectAnswers = savedTestAnswers ? JSON.parse(savedTestAnswers) : {};
+  const savedAnswers = localStorage.getItem("userAnswers");
+  userAnswers = savedAnswers ? JSON.parse(savedAnswers) : userAnswers;
 }
 
 // 更新allQuestions数组，使其只包含未掌握的题目
 function updateAllQuestions() {
-  allQuestions = examMode
-    ? allQuestions.filter((question) => !testCorrectAnswers[question.question])
-    : allQuestions.filter((question) => !correctAnswers[question.question]);
+  allQuestions = allQuestions.filter((question) => !correctAnswers[question.question]);
 }
 
 // 启动计时器
@@ -307,7 +298,10 @@ function reloadData() {
     }
   }
 
+  
   loadProgress(); // 页面加载时加载保存的进度
+  correctAnswers = examMode ? userAnswers.exam.correctAnswers : userAnswers.practice.correctAnswers;
+
   updateAllQuestions(); // 更新题目列表，移除已掌握的题目
   updateProgressBar();
   updateMultiplicationTable();
@@ -336,6 +330,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     timerDisplay.classList.toggle("d-none", !examMode);
     fingersDisplay.classList.toggle("d-none", examMode);
+
+    console.log("userAnswers in exam-mode change:", userAnswers);
+    correctAnswers = examMode ? userAnswers.exam.correctAnswers : userAnswers.practice.correctAnswers;
+    console.log("correctAnswers in exam-mode change:", correctAnswers);
 
     reloadData();
     restartTimer();
@@ -411,11 +409,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // 更新乘法表显示
       const expression = questionDisplay.textContent.split("=")[0].trim();
-      if (examMode) {
-        testCorrectAnswers[expression] = true;
-      } else {
-        correctAnswers[expression] = true;
-      }
+      correctAnswers[expression] = true;
+      console.log('correctAnswers when OK clicked:', correctAnswers);
+      console.log('userAnswers when OK clicked:', userAnswers);
+
       updateMultiplicationTable();
       updateProgressBar();
       saveProgress(); // 正确回答后保存进度
@@ -448,13 +445,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   document.getElementById("resetButton").addEventListener("click", function () {
     // 清空已掌握的题目列表
-    if (examMode) {
-      testCorrectAnswers = {};
-      localStorage.removeItem("testCorrectAnswers"); // 清除localStorage中的数据
-    } else {
-      correctAnswers = {};
-      localStorage.removeItem("correctAnswers"); // 清除localStorage中的数据
-    }
+    localStorage.removeItem("userAnswers"); // 清除localStorage中的数据
 
     // 更新题目列表，确保所有题目都可以再次出现
     updateAllQuestions();
