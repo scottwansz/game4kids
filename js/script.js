@@ -1,3 +1,8 @@
+// 定义常量
+const VOICE_RECOGNITION_DELAY = 3000; // 语音识别重启延迟时间
+const SPEECH_SYNTHESIS_LANGUAGE = "en-US"; // 语音合成语言
+
+
 let userAnswers = {
   practice: {
     correctAnswers: {},
@@ -8,8 +13,6 @@ let userAnswers = {
     notAnswered: {},
   },
 }
-
-let correctAnswers = userAnswers.practice.correctAnswers;
 
 let correctAnswer = 0; // 存储当前题目的正确答案
 
@@ -26,22 +29,35 @@ let timerInterval;
 let allQuestions = [];
 
 // 初始化语音识别
-const recognition = new webkitSpeechRecognition();
+let recognition = new webkitSpeechRecognition();
+recognition.isListening = false;
 // recognition.lang = "zh-CN";
 recognition.continuous = true;
 recognition.interimResults = false;
 
+recognition.onstart = function() {
+  console.log("Recognition started");
+  recognition.isListening = true;
+};
+
+recognition.onend = function() {
+  console.log("Recognition ended");
+  recognition.isListening = false;
+};
+
 // 创建语音播报函数
 function speak(text) {
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
+  utterance.lang = SPEECH_SYNTHESIS_LANGUAGE;
 
   recognition.stop();
   window.speechSynthesis.speak(utterance);
-  // 播报完成后重新开启语音识别;
+  // 播报完成后重新开启语音识别
   setTimeout(() => {
-    recognition.start();
-  }, 3000); // 假设语音播报大约需要1秒
+    if (!recognition.isListening) {
+      recognition.start();
+    }
+  }, VOICE_RECOGNITION_DELAY);
 }
 
 function handleCellClick(expression) {
@@ -61,28 +77,45 @@ function updateMultiplicationTable() {
   const multiplicationTable = document.getElementById("multiplicationTable");
   multiplicationTable.innerHTML = ""; // 清空现有内容
 
-  let table = "<table>";
+  let table = document.createElement("table");
+
   for (let i = 1; i <= 9; i++) {
-    table += "<tr>";
+    let row = document.createElement("tr");
+
     for (let j = 1; j <= 9; j++) {
       if (j <= i) {
-        // 只有当 j 小于或等于 i 时才生成 td 元素
         let expression = `${j} x ${i}`;
+        let cell = document.createElement("td");
 
-        let cellClass = "";
-        cellClass = correctAnswers[expression] ? "correct-answer" : "";
-        // 添加 onclick 事件监听器
-        table += `<td class="${cellClass}" onclick="handleCellClick('${expression}')">${expression}</td>`;
+        if (correctAnswers[expression]) {
+          cell.classList.add("correct-answer");
+        }
+
+        // 添加onclick事件监听器
+        cell.onclick = () => handleCellClick(expression);
+        cell.textContent = expression;
+
+        row.appendChild(cell);
       } else {
-        // 当 j 大于 i 时，生成一个没有 onclick 的 td，且设置为不可见
-        table += `<td class="d-none"></td>`;
+        // 当 j 大于 i 时，生成一个没有onclick的td，且设置为不可见
+        let invisibleCell = document.createElement("td");
+        invisibleCell.classList.add("d-none");
+        row.appendChild(invisibleCell);
       }
     }
-    table += "</tr>";
-  }
-  table += "</table>";
 
-  multiplicationTable.innerHTML = table;
+    table.appendChild(row);
+  }
+
+  multiplicationTable.appendChild(table);
+}
+
+function shuffleArray(array) {
+  // 鱼洗牌算法，用于随机化数组
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
 }
 
 function generateQuestion(n1, n2) {
@@ -96,19 +129,33 @@ function generateQuestion(n1, n2) {
     num1 = n1;
     num2 = n2;
   } else {
-    const item = allQuestions.shift();
+    // 如果是考试模式，先随机化未回答的题目数组
+    if (examMode) {
+      shuffleArray(allQuestions);
+    }
+
+    const item = allQuestions.find(item => !correctAnswers[item.question]);
 
     if (item) {
       // console.log("Generating question from item:", item);
       const question = item.question;
       [num1, num2] = question.split(" x ").map(Number);
     } else {
-      [num1, num2] = [9, 9];
+      // 如果所有题目都已经回答过，重新开始
+      allQuestions = [...allQuestions]; // 复制数组，防止原地修改影响其他逻辑
+      shuffleArray(allQuestions); // 再次随机化
+      const item = allQuestions.find(item => !correctAnswers[item.question]);
+      if (item) {
+        const question = item.question;
+        [num1, num2] = question.split(" x ").map(Number);
+      } else {
+        // 如果找不到未回答的题目，给出消息提示
+        alert("No more question!");
+        return;
+        // [num1, num2] = [9, 9];
+      }
     }
   }
-
-  // let num1 = n1 || Math.floor(Math.random() * 9) + 1;
-  // let num2 = n2 || Math.floor(Math.random() * 9) + 1;
 
   showFingers(num1, num2);
   // 更新题目显示
@@ -231,7 +278,7 @@ function saveProgress() {
     userAnswers.practice.correctAnswers = correctAnswers;
   }
 
-  console.log("saveProgress:", userAnswers);
+  // console.log("saveProgress:", userAnswers);
 
   localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
 }
@@ -331,9 +378,9 @@ document.addEventListener("DOMContentLoaded", function () {
     timerDisplay.classList.toggle("d-none", !examMode);
     fingersDisplay.classList.toggle("d-none", examMode);
 
-    console.log("userAnswers in exam-mode change:", userAnswers);
+    // console.log("userAnswers in exam-mode change:", userAnswers);
     correctAnswers = examMode ? userAnswers.exam.correctAnswers : userAnswers.practice.correctAnswers;
-    console.log("correctAnswers in exam-mode change:", correctAnswers);
+    // console.log("correctAnswers in exam-mode change:", correctAnswers);
 
     reloadData();
     restartTimer();
@@ -410,8 +457,8 @@ document.addEventListener("DOMContentLoaded", function () {
       // 更新乘法表显示
       const expression = questionDisplay.textContent.split("=")[0].trim();
       correctAnswers[expression] = true;
-      console.log('correctAnswers when OK clicked:', correctAnswers);
-      console.log('userAnswers when OK clicked:', userAnswers);
+      // console.log('correctAnswers when OK clicked:', correctAnswers);
+      // console.log('userAnswers when OK clicked:', userAnswers);
 
       updateMultiplicationTable();
       updateProgressBar();
@@ -444,14 +491,18 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   document.getElementById("resetButton").addEventListener("click", function () {
-    // 清空已掌握的题目列表
-    localStorage.removeItem("userAnswers"); // 清除localStorage中的数据
+    
+    // 提示用户确认是否真的要消除记忆
+    if (confirm("Do you really want to clear scores ?")) {
+      // 清空已掌握的题目列表
+      localStorage.removeItem("userAnswers"); // 清除localStorage中的数据
 
-    // 更新题目列表，确保所有题目都可以再次出现
-    updateAllQuestions();
+      // 更新题目列表，确保所有题目都可以再次出现
+      updateAllQuestions();
 
-    // 刷新页面
-    location.reload();
+      // 刷新页面
+      location.reload();
+    }
   });
 
   document.addEventListener("keydown", function (event) {
