@@ -61,7 +61,7 @@ function speak(text) {
 }
 
 function handleCellClick(expression) {
-  clearResult();
+  // clearResult();
   // 分解表达式获取操作数
   const [num1, num2] = expression.split(" x ").map(Number);
 
@@ -82,8 +82,6 @@ function shuffleArray(array) {
 }
 
 function generateQuestion(n1, n2) {
-  answerInput.value = "";
-  clearResult();
 
   let num1 = 1,
     num2 = 1;
@@ -120,20 +118,15 @@ function generateQuestion(n1, n2) {
     }
   }
 
-  showFingers(num1, num2);
-  // 更新题目显示
-  questionDisplay.textContent = `${num1} x ${num2} =`;
+  const fingersDisplay = document.querySelector('fingers-display');
+  fingersDisplay.renderFingers(num1, num2);
+
+  const calculator = document.querySelector("calculator-component");
+  calculator.setAttribute('question', `${num1} x ${num2}`);
 
   speak(`What's ${num1} times ${num2} ?`);
 
   return num1 * num2;
-}
-
-function clearResult() {
-  const resultEl = document.getElementById("result");
-  resultEl.textContent = "";
-  resultEl.classList.remove("correct");
-  resultEl.classList.remove("incorrect");
 }
 
 function updateProgressBar() {
@@ -171,65 +164,6 @@ function addFingerImage(num) {
   const img = document.createElement("img");
   img.src = `image/${num}.png`;
   return img;
-}
-
-function showFingers(m, n) {
-  clearDisplay();
-
-  let cumulativeSum = 0;
-
-  const columns = [];
-  for (let i = 0; i < m; i++) {
-    const column = document.createElement("div");
-    column.className = "fingers-column";
-
-    // Add the column number at the top
-    const columnNumber = document.createElement("span");
-    columnNumber.className = "column-number";
-    columnNumber.textContent = i + 1;
-    column.appendChild(columnNumber);
-
-    // Determine how many images to add based on the value of n
-    if (n > 5) {
-      // Add an image representing the remainder of n
-      const imgPart1 = addFingerImage(n - 5);
-      column.appendChild(imgPart1);
-
-      // Add an image representing 5
-      const imgPart2 = addFingerImage(5);
-      column.appendChild(imgPart2);
-    } else {
-      // Add a single image representing n
-      const img = addFingerImage(n);
-      column.appendChild(img);
-    }
-
-    // Calculate and display cumulative sum below each column except the last one
-    if (i !== m - 1) {
-      cumulativeSum += n;
-      const sumText = document.createElement("span");
-      sumText.className = "cumulative-sum";
-      sumText.textContent = `${cumulativeSum}`;
-      sumText.style.display = "block";
-      sumText.style.textAlign = "center";
-      sumText.style.marginTop = "10px";
-      column.appendChild(sumText);
-    } else {
-      // For the last column, display a question mark instead of the cumulative sum
-      const questionMark = document.createElement("span");
-      questionMark.className = "cumulative-sum";
-      questionMark.textContent = "?";
-      questionMark.style.display = "block";
-      questionMark.style.textAlign = "center";
-      questionMark.style.marginTop = "10px";
-      questionMark.style.color = "red";
-      column.appendChild(questionMark);
-    }
-
-    columns.push(column);
-  }
-
-  fingersDisplay.append(...columns);
 }
 
 // 当问题被正确回答时，将正确答案保存到localStorage
@@ -312,8 +246,6 @@ function reloadData() {
   loadProgress(); // 页面加载时加载保存的进度
   correctAnswers = examMode ? userAnswers.exam.correctAnswers : userAnswers.practice.correctAnswers;
 
-  // 设置<multiplication-table>组件correctAnswers属性
-  // console.log('设置<multiplication-table>组件correctAnswers属性:', correctAnswers);
   document.querySelector("multiplication-table").setAttribute("correct-answers", JSON.stringify(correctAnswers));
 
   updateAllQuestions(); // 更新题目列表，移除已掌握的题目
@@ -322,16 +254,9 @@ function reloadData() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  const questionDisplay = document.getElementById("questionDisplay");
-  const answerInput = document.getElementById("answerInput");
-  const calculatorButtons = document.querySelectorAll(".calculator-button");
-  const submitBtn = document.getElementById("submitBtn");
-  const resultEl = document.getElementById("result");
-  const fingersDisplay = document.getElementById("fingersDisplay");
 
-  // 获取考试模式按钮
-  const examModeButton = document.getElementById("examModeButton");
   const timerDisplay = document.getElementById("timerDisplay");
+  const calculator = document.querySelector("calculator-component");
 
   reloadData();
 
@@ -342,7 +267,8 @@ document.addEventListener("DOMContentLoaded", function () {
     examModeButton.textContent = examMode ? "Exit Exam Mode" : "Exam Mode";
 
     timerDisplay.classList.toggle("d-none", !examMode);
-    fingersDisplay.classList.toggle("d-none", examMode);
+    // fingersDisplay.classList.toggle("d-none", examMode);
+    document.querySelector('fingers-display').classList.toggle("d-none", examMode)
 
     // console.log("userAnswers in exam-mode change:", userAnswers);
     correctAnswers = examMode ? userAnswers.exam.correctAnswers : userAnswers.practice.correctAnswers;
@@ -393,65 +319,11 @@ document.addEventListener("DOMContentLoaded", function () {
     // console.log('Recognition started');
   };
 
-  calculatorButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const action = button.dataset.action;
-      const value = button.dataset.value;
-
-      if (action === "clear") {
-        updateDisplay("");
-      } else if (value) {
-        updateDisplay(answerInput.value + value);
-      }
-    });
-  });
-
-  // // 开始监听
-  // recognition.start();
-  // console.log('Recognition started');
-
-  submitBtn.addEventListener("click", () => {
-    const userAnswer = parseInt(answerInput.value);
-    // console.log(`Correct answer: ${correctAnswer}`);
-    // console.log(`User answer: ${userAnswer}`);
-
-    if (userAnswer === correctAnswer) {
-      resultEl.textContent = "Correct!";
-      resultEl.classList.add("correct"); // 添加正确类
-      resultEl.classList.remove("incorrect"); // 移除错误类，以防之前是错误的
-
-      // 更新乘法表显示
-      const expression = questionDisplay.textContent.split("=")[0].trim();
-      correctAnswers[expression] = true;
-      document.querySelector("multiplication-table").setAttribute("correct-answers", JSON.stringify(correctAnswers));
-
-      updateProgressBar();
-      saveProgress(); // 正确回答后保存进度
-
-      correctAnswer = generateQuestion();
-      if (examMode) {
-        restartTimer();
-      }
-    } else {
-      resultEl.textContent = "Try again.";
-      resultEl.classList.add("incorrect"); // 添加错误类
-      resultEl.classList.remove("correct"); // 移除正确类，以防之前是正确的
-    }
-
-    answerInput.value = "";
-  });
-
   const btnSkip = document.querySelector("#skipBtn");
   btnSkip.addEventListener("click", () => {
     saveProgress();
     correctAnswer = generateQuestion();
     restartTimer();
-  });
-
-  answerInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      submitBtn.click();
-    }
   });
 
   document.getElementById("resetButton").addEventListener("click", function () {
@@ -469,26 +341,23 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  document.addEventListener("keydown", function (event) {
-    if (!answerInput.matches(":focus")) {
-      // 检查输入框是否未获得焦点
-      if (event.key >= "0" && event.key <= "9") {
-        // 数字键
-        answerInput.value += event.key;
+  // Listen for answer events
+  calculator.addEventListener('correctAnswer', event => {
+    console.log('Correct answer event:', event.detail);
+    correctAnswers[event.detail.question] = true;
 
-        // 检查输入框中的字符数量
-        if (answerInput.value.length === 2) {
-          submitBtn.click(); // 自动提交答案
-        }
-        // answerInput.focus(); // 设置焦点，以便后续键盘输入直接生效
-      } else if (event.key === "Backspace") {
-        // 退格键
-        answerInput.value = answerInput.value.slice(0, -1);
-        answerInput.focus();
-      } else if (event.key === "Enter") {
-        // 回车键
-        submitBtn.click();
-      }
-    }
+    document.querySelector("multiplication-table").setAttribute("correct-answers", JSON.stringify(correctAnswers));
+
+    updateProgressBar();
+    saveProgress(); // 正确回答后保存进度
+
+    correctAnswer = generateQuestion();
+    // Update learning progress and status display
+    // updateLearningProgress(event.detail.answer);
+    // tableStatus.setAttribute('status', JSON.stringify(getLearningStatus()));
+  });
+
+  calculator.addEventListener('wrongAnswer', event => {
+    // Handle wrong answer
   });
 });
