@@ -73,43 +73,6 @@ function handleCellClick(expression) {
   }
 }
 
-function updateMultiplicationTable() {
-  const multiplicationTable = document.getElementById("multiplicationTable");
-  multiplicationTable.innerHTML = ""; // 清空现有内容
-
-  let table = document.createElement("table");
-
-  for (let i = 1; i <= 9; i++) {
-    let row = document.createElement("tr");
-
-    for (let j = 1; j <= 9; j++) {
-      if (j <= i) {
-        let expression = `${j} x ${i}`;
-        let cell = document.createElement("td");
-
-        if (correctAnswers[expression]) {
-          cell.classList.add("correct-answer");
-        }
-
-        // 添加onclick事件监听器
-        cell.onclick = () => handleCellClick(expression);
-        cell.textContent = expression;
-
-        row.appendChild(cell);
-      } else {
-        // 当 j 大于 i 时，生成一个没有onclick的td，且设置为不可见
-        let invisibleCell = document.createElement("td");
-        invisibleCell.classList.add("d-none");
-        row.appendChild(invisibleCell);
-      }
-    }
-
-    table.appendChild(row);
-  }
-
-  multiplicationTable.appendChild(table);
-}
-
 function shuffleArray(array) {
   // 鱼洗牌算法，用于随机化数组
   for (let i = array.length - 1; i > 0; i--) {
@@ -349,9 +312,12 @@ function reloadData() {
   loadProgress(); // 页面加载时加载保存的进度
   correctAnswers = examMode ? userAnswers.exam.correctAnswers : userAnswers.practice.correctAnswers;
 
+  // 设置<multiplication-table>组件correctAnswers属性
+  // console.log('设置<multiplication-table>组件correctAnswers属性:', correctAnswers);
+  document.querySelector("multiplication-table").setAttribute("correct-answers", JSON.stringify(correctAnswers));
+
   updateAllQuestions(); // 更新题目列表，移除已掌握的题目
   updateProgressBar();
-  updateMultiplicationTable();
   correctAnswer = generateQuestion();
 }
 
@@ -457,10 +423,8 @@ document.addEventListener("DOMContentLoaded", function () {
       // 更新乘法表显示
       const expression = questionDisplay.textContent.split("=")[0].trim();
       correctAnswers[expression] = true;
-      // console.log('correctAnswers when OK clicked:', correctAnswers);
-      // console.log('userAnswers when OK clicked:', userAnswers);
+      document.querySelector("multiplication-table").setAttribute("correct-answers", JSON.stringify(correctAnswers));
 
-      updateMultiplicationTable();
       updateProgressBar();
       saveProgress(); // 正确回答后保存进度
 
