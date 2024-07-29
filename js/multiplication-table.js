@@ -23,7 +23,7 @@ class MultiplicationTable extends HTMLElement {
   render() {
     const template = document.createElement("template");
     template.innerHTML = `
-        <link href="/css/bootstrap.min.css" rel="stylesheet">
+        <link href="css/bootstrap.min.css" rel="stylesheet">
         <style>
             table {
                 border-collapse: collapse;
