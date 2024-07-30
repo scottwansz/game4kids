@@ -20,8 +20,6 @@ class FingersDisplay extends HTMLElement {
           /* 允许手指展示区扩展以填充可用空间 */
           flex-basis: 0;
           /* 初始基础宽度为0，允许扩展 */
-          max-width: calc(85% - 2rem);
-          /* 限制最大宽度 */
         }
 
         .fingers-display .divider {

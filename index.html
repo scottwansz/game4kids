@@ -7,7 +7,13 @@
     <title>Multiplication Game with Hand Images</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
-    <style></style>
+    <style>
+        /* 在您的 CSS 文件中定义 */
+        .timer-display {
+            margin-right: 2rem;
+            /* 或任何您需要的值 */
+        }
+    </style>
 </head>
 
 <body>
@@ -17,7 +23,7 @@
     <div class="container mt-5">
         <div class=" d-flex align-items-center">
             <div class="text-center d-flex align-items-center">
-                <h1 class="font-weight-bold">Hello 
+                <h1 class="font-weight-bold">Hello
                     <span class="text-primary">Qiu Qiu</span>,
                     <small class="text-muted">let's play game！</small>
                 </h1>
@@ -27,8 +33,6 @@
         </div>
     </div>
 
-    <fingers-display></fingers-display>
-
     <div class="container">
         <div class="progress">
             <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0"
@@ -36,17 +40,20 @@
         </div>
     </div>
 
+    <fingers-display></fingers-display>
+
     <div class="container mt-3">
+
         <multiplication-table correct-answers='{"1 x 1": 1, "2 x 2": 4}'></multiplication-table>
 
-        <div class="d-flex align-items-center h-100" id="calculator">
+        <div class="d-flex align-items-start justify-content-start" id="calculator">
 
-            <div class="timer-display d-flex align-items-center d-none" id="timerDisplay">
+            <div class="timer-display d-flex align-items-center d-none border border-primary rounded p-2" id="timerDisplay">
                 <span id="timer" class="fw-bold px-30">30:00</span>
                 <button class="btn btn-secondary ms-2" id="skipBtn">Skip</button>
             </div>
 
-            <calculator-component></calculator-component>
+            <calculator-component class="border border-primary rounded p-2"></calculator-component>
         </div>
     </div>
 

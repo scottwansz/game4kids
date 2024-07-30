@@ -31,7 +31,6 @@ class CalculatorComponent extends HTMLElement {
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem;
             width: 200px;
             /* 调整宽度以适应布局需求 */
             /* 添加下面的属性以允许计算器扩展 */
@@ -109,7 +108,6 @@ class CalculatorComponent extends HTMLElement {
 
           <button class="btn btn-primary calculator-button" id="submitBtn">O</button>
         </div>
-        <p id="result" class="mt-3"></p>
       </div>
     `;
   }

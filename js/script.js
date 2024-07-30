@@ -2,7 +2,6 @@
 const VOICE_RECOGNITION_DELAY = 3000; // 语音识别重启延迟时间
 const SPEECH_SYNTHESIS_LANGUAGE = "en-US"; // 语音合成语言
 
-
 let userAnswers = {
   practice: {
     correctAnswers: {},
@@ -12,7 +11,7 @@ let userAnswers = {
     correctAnswers: {},
     notAnswered: {},
   },
-}
+};
 
 let correctAnswer = 0; // 存储当前题目的正确答案
 
@@ -35,12 +34,12 @@ recognition.isListening = false;
 recognition.continuous = true;
 recognition.interimResults = false;
 
-recognition.onstart = function() {
+recognition.onstart = function () {
   console.log("Recognition started");
   recognition.isListening = true;
 };
 
-recognition.onend = function() {
+recognition.onend = function () {
   console.log("Recognition ended");
   recognition.isListening = false;
 };
@@ -82,7 +81,6 @@ function shuffleArray(array) {
 }
 
 function generateQuestion(n1, n2) {
-
   let num1 = 1,
     num2 = 1;
 
@@ -95,7 +93,7 @@ function generateQuestion(n1, n2) {
       shuffleArray(allQuestions);
     }
 
-    const item = allQuestions.find(item => !correctAnswers[item.question]);
+    const item = allQuestions.find((item) => !correctAnswers[item.question]);
 
     if (item) {
       // console.log("Generating question from item:", item);
@@ -105,7 +103,7 @@ function generateQuestion(n1, n2) {
       // 如果所有题目都已经回答过，重新开始
       allQuestions = [...allQuestions]; // 复制数组，防止原地修改影响其他逻辑
       shuffleArray(allQuestions); // 再次随机化
-      const item = allQuestions.find(item => !correctAnswers[item.question]);
+      const item = allQuestions.find((item) => !correctAnswers[item.question]);
       if (item) {
         const question = item.question;
         [num1, num2] = question.split(" x ").map(Number);
@@ -118,11 +116,11 @@ function generateQuestion(n1, n2) {
     }
   }
 
-  const fingersDisplay = document.querySelector('fingers-display');
+  const fingersDisplay = document.querySelector("fingers-display");
   fingersDisplay.renderFingers(num1, num2);
 
   const calculator = document.querySelector("calculator-component");
-  calculator.setAttribute('question', `${num1} x ${num2}`);
+  calculator.setAttribute("question", `${num1} x ${num2}`);
 
   speak(`What's ${num1} times ${num2} ?`);
 
@@ -131,10 +129,13 @@ function generateQuestion(n1, n2) {
 
 function updateProgressBar() {
   const progressBar = document.querySelector(".progress-bar");
-  const percentage = ((Object.keys(correctAnswers).length / totalQuestions) * 100).toFixed(1);
+  const percentage = (
+    (Object.keys(correctAnswers).length / totalQuestions) *
+    100
+  ).toFixed(1);
 
   progressBar.style.width = `${percentage}%`;
-  progressBar.textContent = `${percentage}`;
+  progressBar.textContent = `${percentage}%`;
   progressBar.setAttribute("aria-valuenow", percentage);
 
   // 根据值改变颜色
@@ -168,8 +169,7 @@ function addFingerImage(num) {
 
 // 当问题被正确回答时，将正确答案保存到localStorage
 function saveProgress() {
-
-  if(examMode){
+  if (examMode) {
     userAnswers.exam.correctAnswers = correctAnswers;
   } else {
     userAnswers.practice.correctAnswers = correctAnswers;
@@ -188,7 +188,9 @@ function loadProgress() {
 
 // 更新allQuestions数组，使其只包含未掌握的题目
 function updateAllQuestions() {
-  allQuestions = allQuestions.filter((question) => !correctAnswers[question.question]);
+  allQuestions = allQuestions.filter(
+    (question) => !correctAnswers[question.question]
+  );
 }
 
 // 启动计时器
@@ -214,7 +216,7 @@ function updateTimerDisplay() {
   const timerDisplay = document.getElementById("timer");
   let minutes = Math.floor(timeRemaining / 60);
   let seconds = timeRemaining % 60;
-  timerDisplay.textContent = `${minutes}:${seconds
+  timerDisplay.textContent = `${minutes.toString().padStart(2, "0")}:${seconds
     .toString()
     .padStart(2, "0")}`;
 }
@@ -233,7 +235,6 @@ function restartTimer() {
 }
 
 function reloadData() {
-
   // 生成题目并分配难度
   allQuestions = [];
   for (let i = 1; i <= 9; i++) {
@@ -242,11 +243,14 @@ function reloadData() {
     }
   }
 
-  
   loadProgress(); // 页面加载时加载保存的进度
-  correctAnswers = examMode ? userAnswers.exam.correctAnswers : userAnswers.practice.correctAnswers;
+  correctAnswers = examMode
+    ? userAnswers.exam.correctAnswers
+    : userAnswers.practice.correctAnswers;
 
-  document.querySelector("multiplication-table").setAttribute("correct-answers", JSON.stringify(correctAnswers));
+  document
+    .querySelector("multiplication-table")
+    .setAttribute("correct-answers", JSON.stringify(correctAnswers));
 
   updateAllQuestions(); // 更新题目列表，移除已掌握的题目
   updateProgressBar();
@@ -254,7 +258,6 @@ function reloadData() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-
   const timerDisplay = document.getElementById("timerDisplay");
   const calculator = document.querySelector("calculator-component");
 
@@ -268,10 +271,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     timerDisplay.classList.toggle("d-none", !examMode);
     // fingersDisplay.classList.toggle("d-none", examMode);
-    document.querySelector('fingers-display').classList.toggle("d-none", examMode)
+    document
+      .querySelector("fingers-display")
+      .classList.toggle("d-none", examMode);
 
     // console.log("userAnswers in exam-mode change:", userAnswers);
-    correctAnswers = examMode ? userAnswers.exam.correctAnswers : userAnswers.practice.correctAnswers;
+    correctAnswers = examMode
+      ? userAnswers.exam.correctAnswers
+      : userAnswers.practice.correctAnswers;
     // console.log("correctAnswers in exam-mode change:", correctAnswers);
 
     reloadData();
@@ -327,7 +334,6 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   document.getElementById("resetButton").addEventListener("click", function () {
-    
     // 提示用户确认是否真的要消除记忆
     if (confirm("Do you really want to clear scores ?")) {
       // 清空已掌握的题目列表
@@ -342,11 +348,13 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Listen for answer events
-  calculator.addEventListener('correctAnswer', event => {
-    console.log('Correct answer event:', event.detail);
+  calculator.addEventListener("correctAnswer", (event) => {
+    console.log("Correct answer event:", event.detail);
     correctAnswers[event.detail.question] = true;
 
-    document.querySelector("multiplication-table").setAttribute("correct-answers", JSON.stringify(correctAnswers));
+    document
+      .querySelector("multiplication-table")
+      .setAttribute("correct-answers", JSON.stringify(correctAnswers));
 
     updateProgressBar();
     saveProgress(); // 正确回答后保存进度
@@ -357,7 +365,16 @@ document.addEventListener("DOMContentLoaded", function () {
     // tableStatus.setAttribute('status', JSON.stringify(getLearningStatus()));
   });
 
-  calculator.addEventListener('wrongAnswer', event => {
+  calculator.addEventListener("wrongAnswer", (event) => {
     // Handle wrong answer
+    console.log("Wrong answer:", event.detail.question, "=", event.detail.answer);
   });
+
+  document
+    .querySelector("multiplication-table")
+    .addEventListener("table-cell-click", (event) => {
+      // console.log('event.detail: ', event.detail);
+      const [n1, n2] = event.detail.split(" x ").map(Number);
+      generateQuestion(n1, n2);
+    });
 });

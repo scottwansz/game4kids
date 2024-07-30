@@ -45,7 +45,10 @@ class MultiplicationTable extends HTMLElement {
         <table></table>
     `;
 
-    const table = template.content.querySelector("table");
+    this.shadowRoot.innerHTML = "";
+    this.shadowRoot.appendChild(template.content.cloneNode(true));
+
+    const table = this.shadowRoot.querySelector("table");
     // this.correctAnswers = {'1 x 1': true, '2 x 2': true, '3 x 3': true, '4 x 4': true, '5 x 5': true, '6 x 6': true, '7 x 7': true, '8 x 8': true, '9 x 9': true}
 
     for (let i = 1; i <= 9; i++) {
@@ -61,7 +64,7 @@ class MultiplicationTable extends HTMLElement {
           }
 
           // 添加onclick事件监听器
-          cell.onclick = () => handleCellClick(expression);
+          cell.addEventListener('click', () => this.handleCellClick(expression));
           cell.textContent = expression;
 
           row.appendChild(cell);
@@ -75,9 +78,11 @@ class MultiplicationTable extends HTMLElement {
 
       table.appendChild(row);
     }
+  }
 
-    this.shadowRoot.innerHTML = "";
-    this.shadowRoot.appendChild(template.content.cloneNode(true));
+  handleCellClick(expression){
+    // console.log('expression: ', expression);
+    this.dispatchEvent(new CustomEvent("table-cell-click", { detail: expression }));
   }
 }
 
