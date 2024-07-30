@@ -27,16 +27,7 @@
         </div>
     </div>
 
-    <div class="container-fluid h-100">
-        <fingers-display></fingers-display>
-
-        <calculator-component></calculator-component>
-
-        <div class="timer-display d-flex flex-column align-items-center d-none" id="timerDisplay">
-            <span id="timer" class="fw-bold px-30">30:00</span>
-            <button class="btn btn-success ms-2" id="skipBtn">Skip</button>
-        </div>
-    </div>
+    <fingers-display></fingers-display>
 
     <div class="container">
         <div class="progress">
@@ -47,6 +38,16 @@
 
     <div class="container mt-3">
         <multiplication-table correct-answers='{"1 x 1": 1, "2 x 2": 4}'></multiplication-table>
+
+        <div class="d-flex align-items-center h-100" id="calculator">
+
+            <div class="timer-display d-flex align-items-center d-none" id="timerDisplay">
+                <span id="timer" class="fw-bold px-30">30:00</span>
+                <button class="btn btn-secondary ms-2" id="skipBtn">Skip</button>
+            </div>
+
+            <calculator-component></calculator-component>
+        </div>
     </div>
 
     <script src="js/script.js"></script>

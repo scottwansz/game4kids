@@ -24,6 +24,13 @@ class FingersDisplay extends HTMLElement {
           /* 限制最大宽度 */
         }
 
+        .fingers-display .divider {
+          position: relative;
+          width: 100%;
+          height: 0;
+          border-top: 2px dashed green;
+        }
+
         .fingers-column {
           display: flex;
           flex-direction: column;
