@@ -6,14 +6,18 @@ let userAnswers = {
   practice: {
     correctAnswers: {},
     notAnswered: {},
+    answers: {},
   },
   exam: {
     correctAnswers: {},
     notAnswered: {},
+    answers: {},
   },
 };
 
+let question = "";
 let correctAnswer = 0; // 存储当前题目的正确答案
+let answers = {};
 
 const totalQuestions = 45; // 总题量
 
@@ -59,19 +63,6 @@ function speak(text) {
   }, VOICE_RECOGNITION_DELAY);
 }
 
-function handleCellClick(expression) {
-  // clearResult();
-  // 分解表达式获取操作数
-  const [num1, num2] = expression.split(" x ").map(Number);
-
-  // 更新题目显示
-  if (num1 > num2) {
-    correctAnswer = generateQuestion(num2, num1);
-  } else {
-    correctAnswer = generateQuestion(num1, num2);
-  }
-}
-
 function shuffleArray(array) {
   // 鱼洗牌算法，用于随机化数组
   for (let i = array.length - 1; i > 0; i--) {
@@ -97,7 +88,7 @@ function generateQuestion(n1, n2) {
 
     if (item) {
       // console.log("Generating question from item:", item);
-      const question = item.question;
+      question = item.question;
       [num1, num2] = question.split(" x ").map(Number);
     } else {
       // 如果所有题目都已经回答过，重新开始
@@ -105,7 +96,7 @@ function generateQuestion(n1, n2) {
       shuffleArray(allQuestions); // 再次随机化
       const item = allQuestions.find((item) => !correctAnswers[item.question]);
       if (item) {
-        const question = item.question;
+        question = item.question;
         [num1, num2] = question.split(" x ").map(Number);
       } else {
         // 如果找不到未回答的题目，给出消息提示
@@ -130,8 +121,7 @@ function generateQuestion(n1, n2) {
 function updateProgressBar() {
   const progressBar = document.querySelector(".progress-bar");
   const percentage = (
-    (Object.keys(correctAnswers).length / totalQuestions) *
-    100
+    (Object.keys(correctAnswers).length / totalQuestions) * 100
   ).toFixed(1);
 
   progressBar.style.width = `${percentage}%`;
@@ -171,11 +161,13 @@ function addFingerImage(num) {
 function saveProgress() {
   if (examMode) {
     userAnswers.exam.correctAnswers = correctAnswers;
+    userAnswers.exam.answers = answers;
   } else {
     userAnswers.practice.correctAnswers = correctAnswers;
+    userAnswers.practice.answers = answers;
   }
 
-  // console.log("saveProgress:", userAnswers);
+  console.log("saveProgress:", userAnswers);
 
   localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
 }
@@ -184,6 +176,7 @@ function saveProgress() {
 function loadProgress() {
   const savedAnswers = localStorage.getItem("userAnswers");
   userAnswers = savedAnswers ? JSON.parse(savedAnswers) : userAnswers;
+  console.log("loadProgress:", userAnswers);
 }
 
 // 更新allQuestions数组，使其只包含未掌握的题目
@@ -244,13 +237,21 @@ function reloadData() {
   }
 
   loadProgress(); // 页面加载时加载保存的进度
+
   correctAnswers = examMode
     ? userAnswers.exam.correctAnswers
     : userAnswers.practice.correctAnswers;
 
+  answers = examMode
+    ? userAnswers.exam.answers
+    : userAnswers.practice.answers;
+  
+  console.log("userAnswers in reloadData:", userAnswers)
+  console.log("answers in reloadData:", answers);
+
   document
     .querySelector("multiplication-table")
-    .setAttribute("correct-answers", JSON.stringify(correctAnswers));
+    .setAttribute("answers", JSON.stringify(answers));
 
   updateAllQuestions(); // 更新题目列表，移除已掌握的题目
   updateProgressBar();
@@ -279,6 +280,9 @@ document.addEventListener("DOMContentLoaded", function () {
     correctAnswers = examMode
       ? userAnswers.exam.correctAnswers
       : userAnswers.practice.correctAnswers;
+
+    answers = examMode ? userAnswers.exam.answers : userAnswers.practice.answers;
+    console.log("answers in exam-mode change:", answers);
     // console.log("correctAnswers in exam-mode change:", correctAnswers);
 
     reloadData();
@@ -328,6 +332,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const btnSkip = document.querySelector("#skipBtn");
   btnSkip.addEventListener("click", () => {
+    console.log("Question when Skip button clicked:", question);
+    answers[question] = false;
+    document.querySelector("multiplication-table").setAttribute("answers", JSON.stringify(answers));
     saveProgress();
     correctAnswer = generateQuestion();
     restartTimer();
@@ -352,9 +359,9 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log("Correct answer event:", event.detail);
     correctAnswers[event.detail.question] = true;
 
-    document
-      .querySelector("multiplication-table")
-      .setAttribute("correct-answers", JSON.stringify(correctAnswers));
+    // document
+    //   .querySelector("multiplication-table")
+    //   .setAttribute("correct-answers", JSON.stringify(correctAnswers));
 
     updateProgressBar();
     saveProgress(); // 正确回答后保存进度
@@ -368,6 +375,16 @@ document.addEventListener("DOMContentLoaded", function () {
   calculator.addEventListener("wrongAnswer", (event) => {
     // Handle wrong answer
     console.log("Wrong answer:", event.detail.question, "=", event.detail.answer);
+  });
+
+  calculator.addEventListener("answer", (event) => {
+    console.log("answers in main when answer event got:", answers)
+    console.log("answer:", event.detail.question, "=", event.detail.result);
+    answers[event.detail.question] = event.detail.result;
+    saveProgress();
+    document
+    .querySelector("multiplication-table")
+    .setAttribute("answers", JSON.stringify(answers));
   });
 
   document

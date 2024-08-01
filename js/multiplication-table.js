@@ -1,5 +1,5 @@
 class MultiplicationTable extends HTMLElement {
-  static observedAttributes = ["correct-answers"];
+  static observedAttributes = ["correct-answers",'answers'];
 
   constructor() {
     super();
@@ -13,9 +13,9 @@ class MultiplicationTable extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    // console.log("attributeChangedCallback", name, oldValue, newValue);
-    if (name === "correct-answers") {
-      this.correctAnswers = JSON.parse(newValue);
+    // console.log("attributeChangedCallback", name, newValue);
+    if (name === "answers") {
+      this.answers = JSON.parse(newValue);
       this.render();
     }
   }
@@ -41,6 +41,11 @@ class MultiplicationTable extends HTMLElement {
                 background-color: green;
                 color: white;
             }
+            
+            .wrong-answer {
+                background-color: orange;
+                color: yellow;
+            }
         </style>
         <table></table>
     `;
@@ -59,8 +64,10 @@ class MultiplicationTable extends HTMLElement {
           let expression = `${j} x ${i}`;
           let cell = document.createElement("td");
 
-          if (this.correctAnswers[expression]) {
+          if (this.answers[expression]) {
             cell.classList.add("correct-answer");
+          } else if (this.answers[expression] === false){
+            cell.classList.add("wrong-answer");
           }
 
           // 添加onclick事件监听器

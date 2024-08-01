@@ -8,6 +8,7 @@ class CalculatorComponent extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.correctAnswer = 0;
     this.question = "";
+    this.answered = false;
 
     this.render();
     this.initListeners();
@@ -108,6 +109,7 @@ class CalculatorComponent extends HTMLElement {
 
           <button class="btn btn-primary calculator-button" id="submitBtn">O</button>
         </div>
+        <div class="p-2"><strong><span id="result">You are great!</span></strong></div>
       </div>
     `;
   }
@@ -115,6 +117,7 @@ class CalculatorComponent extends HTMLElement {
   updateQuestionDisplay(question) {
     const questionDisplay = this.shadowRoot.querySelector("#questionDisplay");
     questionDisplay.textContent = question + " = ";
+    this.clearDisplay();
   }
 
   calculateCorrectAnswer(question) {
@@ -135,6 +138,10 @@ class CalculatorComponent extends HTMLElement {
         if (action === "clear") {
           this.clearDisplay();
         } else if (value) {
+          if(this.answered){
+            this.answered = false;
+            this.clearDisplay();
+          }
           this.updateDisplay(value);
         }
       });
@@ -142,16 +149,34 @@ class CalculatorComponent extends HTMLElement {
 
     const submitBtn = this.shadowRoot.querySelector("#submitBtn");
     submitBtn.addEventListener("click", () => {
+      this.answered = true;
       // 使用组件内部的状态来检查答案
       const userAnswer = parseInt(
         this.shadowRoot.querySelector("#answerInput").value
       );
 
-      //   console.log("this.question in caculator:", this.question);
+      const resultSpan = this.shadowRoot.getElementById("result")
 
       if (userAnswer === this.correctAnswer) {
-        // 清除答案输入框
         this.shadowRoot.querySelector("#answerInput").value = "";
+
+        resultSpan.classList.remove('text-danger'); // 移除错误的样式
+        resultSpan.classList.add('text-success'); // 添加正确的样式
+        resultSpan.innerText = '√ Correct, great!'; // 正确的符号
+
+      } else {
+          resultSpan.classList.remove('text-success'); // 移除正确的样式
+          resultSpan.classList.add('text-danger'); // 添加错误的样式
+          resultSpan.innerText = '✗ Incorrect. Try again.'; // 错误的符号
+      }
+
+      this.dispatchEvent(
+        new CustomEvent("answer", {
+          detail: { question: this.question, result: userAnswer === this.correctAnswer },
+        })
+      );
+
+      if (userAnswer === this.correctAnswer) {
         this.dispatchEvent(
           new CustomEvent("correctAnswer", {
             detail: { question: this.question, answer: userAnswer },
@@ -175,13 +200,12 @@ class CalculatorComponent extends HTMLElement {
   }
 
   clearDisplay() {
-    const answerInput = this.shadowRoot.querySelector("#answerInput");
-    answerInput.value = "";
+    this.shadowRoot.querySelector("#answerInput").value = "";
+    this.shadowRoot.getElementById("result").innerHTML = "";
   }
 
   updateDisplay(value) {
-    const answerInput = this.shadowRoot.querySelector("#answerInput");
-    answerInput.value += value;
+    this.shadowRoot.querySelector("#answerInput").value += value;
   }
 }
 
