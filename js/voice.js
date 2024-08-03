@@ -1,6 +1,24 @@
-// 定义常量
-const VOICE_RECOGNITION_DELAY = 3000; // 语音识别重启延迟时间
+const VOICE_RECOGNITION_DELAY = 0; // 语音识别重启延迟时间
 const SPEECH_SYNTHESIS_LANGUAGE = "en-US"; // 语音合成语言
+
+// 创建语音播报函数
+function speak(text) {
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = SPEECH_SYNTHESIS_LANGUAGE;
+
+  recognition.stop();
+  window.speechSynthesis.speak(utterance);
+  // 播报完成后重新开启语音识别
+  setTimeout(() => {
+    if (!recognition.isListening) {
+      recognition.start();
+    }
+  }, VOICE_RECOGNITION_DELAY);
+}
+
+// speak(`What's ${num1} times ${num2} ?`);
+speak(`Hello, Qiu Qiu`);
+
 
 // 初始化语音识别
 let recognition = new webkitSpeechRecognition();
@@ -56,24 +74,6 @@ recognition.onresult = function (event) {
 
 recognition.onend = function () {
   console.log("Recognition ended");
-  // recognition.start();
+  recognition.start();
   // console.log('Recognition started');
 };
-
-// 创建语音播报函数
-function speak(text) {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = SPEECH_SYNTHESIS_LANGUAGE;
-  
-    recognition.stop();
-    window.speechSynthesis.speak(utterance);
-    // 播报完成后重新开启语音识别
-    setTimeout(() => {
-      if (!recognition.isListening) {
-        recognition.start();
-      }
-    }, VOICE_RECOGNITION_DELAY);
-  }
-
-// speak(`What's ${num1} times ${num2} ?`);
-speak(`Hello, Qiu Qiu`)
