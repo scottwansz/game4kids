@@ -13,7 +13,7 @@ class MultiplicationTable extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    // console.log("attributeChangedCallback", name, newValue);
+    console.log("attributeChangedCallback", name, newValue);
     if (name === "answers") {
       this.answers = JSON.parse(newValue);
       this.render();
@@ -43,8 +43,13 @@ class MultiplicationTable extends HTMLElement {
             }
             
             .wrong-answer {
-                background-color: orange;
+                background-color: red;
                 color: yellow;
+            }
+
+            .danger {
+                background-color: orange;
+                color: white;
             }
         </style>
         <table></table>
@@ -68,6 +73,8 @@ class MultiplicationTable extends HTMLElement {
             cell.classList.add("correct-answer");
           } else if (this.answers[expression] === false){
             cell.classList.add("wrong-answer");
+          } else if (this.answers[expression] === null) {
+            cell.classList.add("danger");
           }
 
           // 添加onclick事件监听器

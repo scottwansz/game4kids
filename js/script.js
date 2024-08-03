@@ -238,7 +238,15 @@ document.addEventListener("DOMContentLoaded", function () {
   calculator.addEventListener("answer", (event) => {
     // console.log("answers in main when answer event got:", answers)
     // console.log("answer:", event.detail.question, "=", event.detail.result);
-    answers[event.detail.question] = event.detail.result;
+
+    // qestion remembered with three states: true, false, undefined
+    if (answers[event.detail.question] === false && event.detail.result) {
+      // 如果上次回答错误，则标记为未掌握
+      answers[event.detail.question] = null;
+    } else {
+      answers[event.detail.question] = event.detail.result;
+    }
+
     document
       .querySelector("multiplication-table")
       .setAttribute("answers", JSON.stringify(answers));
