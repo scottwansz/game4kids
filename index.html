@@ -48,8 +48,13 @@
 
         <div class="d-flex align-items-start justify-content-start" id="calculator">
 
-            <div class="timer-display d-flex align-items-center d-none border border-primary rounded p-2" id="timerDisplay">
+            <!-- <div class="timer-display d-flex align-items-center d-none border border-primary rounded p-2" id="timerDisplay">
                 <span id="timer" class="fw-bold px-30">30:00</span>
+                <button class="btn btn-secondary ms-2" id="skipBtn">Skip</button>
+            </div> -->
+
+            <div class="timer-display d-flex align-items-center d-none border border-primary rounded p-2" id="timerDisplay">
+                <timer-component></timer-component>
                 <button class="btn btn-secondary ms-2" id="skipBtn">Skip</button>
             </div>
 
@@ -63,6 +68,7 @@
     <script src="js/multiplication-table.js"></script>
     <script src="js/fingers-display.js"></script>
     <script src="js/calculator-component.js"></script>
+    <script src="js/timer-component.js"></script>
 </body>
 
 </html>

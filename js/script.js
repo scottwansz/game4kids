@@ -1,15 +1,9 @@
-// 定义常量
-const VOICE_RECOGNITION_DELAY = 3000; // 语音识别重启延迟时间
-const SPEECH_SYNTHESIS_LANGUAGE = "en-US"; // 语音合成语言
-
 let userAnswers = {
   practice: {
-    correctAnswers: {},
     notAnswered: {},
     answers: {},
   },
   exam: {
-    correctAnswers: {},
     notAnswered: {},
     answers: {},
   },
@@ -30,38 +24,6 @@ let timeRemaining = 30;
 let timerInterval;
 
 let allQuestions = [];
-
-// 初始化语音识别
-let recognition = new webkitSpeechRecognition();
-recognition.isListening = false;
-// recognition.lang = "zh-CN";
-recognition.continuous = true;
-recognition.interimResults = false;
-
-recognition.onstart = function () {
-  console.log("Recognition started");
-  recognition.isListening = true;
-};
-
-recognition.onend = function () {
-  console.log("Recognition ended");
-  recognition.isListening = false;
-};
-
-// 创建语音播报函数
-function speak(text) {
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = SPEECH_SYNTHESIS_LANGUAGE;
-
-  recognition.stop();
-  window.speechSynthesis.speak(utterance);
-  // 播报完成后重新开启语音识别
-  setTimeout(() => {
-    if (!recognition.isListening) {
-      recognition.start();
-    }
-  }, VOICE_RECOGNITION_DELAY);
-}
 
 function shuffleArray(array) {
   // 鱼洗牌算法，用于随机化数组
@@ -84,26 +46,17 @@ function generateQuestion(n1, n2) {
       shuffleArray(allQuestions);
     }
 
-    const item = allQuestions.find((item) => !correctAnswers[item.question]);
+    const item = allQuestions.find((item) => !answers[item.question]);
 
     if (item) {
       // console.log("Generating question from item:", item);
       question = item.question;
       [num1, num2] = question.split(" x ").map(Number);
     } else {
-      // 如果所有题目都已经回答过，重新开始
-      allQuestions = [...allQuestions]; // 复制数组，防止原地修改影响其他逻辑
-      shuffleArray(allQuestions); // 再次随机化
-      const item = allQuestions.find((item) => !correctAnswers[item.question]);
-      if (item) {
-        question = item.question;
-        [num1, num2] = question.split(" x ").map(Number);
-      } else {
-        // 如果找不到未回答的题目，给出消息提示
-        alert("No more question!");
-        return;
-        // [num1, num2] = [9, 9];
-      }
+      // 如果找不到未回答的题目，给出消息提示
+      alert("No more question!");
+      // return;
+      [num1, num2] = [9, 9];
     }
   }
 
@@ -113,16 +66,19 @@ function generateQuestion(n1, n2) {
   const calculator = document.querySelector("calculator-component");
   calculator.setAttribute("question", `${num1} x ${num2}`);
 
-  speak(`What's ${num1} times ${num2} ?`);
-
   return num1 * num2;
 }
 
 function updateProgressBar() {
   const progressBar = document.querySelector(".progress-bar");
-  const percentage = (
-    (Object.keys(correctAnswers).length / totalQuestions) * 100
-  ).toFixed(1);
+
+  correctAccount = Object.keys(answers).reduce((acc, curr) => {
+    return acc + (answers[curr] ? 1 : 0);
+  }, 0);
+
+  console.log("correctAccount:", correctAccount);
+
+  const percentage = (    (correctAccount / totalQuestions) *    100  ).toFixed(1);
 
   progressBar.style.width = `${percentage}%`;
   progressBar.textContent = `${percentage}%`;
@@ -145,25 +101,11 @@ function updateDisplay(value) {
   answerInput.value = value;
 }
 
-function clearDisplay() {
-  while (fingersDisplay.firstChild) {
-    fingersDisplay.removeChild(fingersDisplay.firstChild);
-  }
-}
-
-function addFingerImage(num) {
-  const img = document.createElement("img");
-  img.src = `image/${num}.png`;
-  return img;
-}
-
 // 当问题被正确回答时，将正确答案保存到localStorage
 function saveProgress() {
   if (examMode) {
-    userAnswers.exam.correctAnswers = correctAnswers;
     userAnswers.exam.answers = answers;
   } else {
-    userAnswers.practice.correctAnswers = correctAnswers;
     userAnswers.practice.answers = answers;
   }
 
@@ -180,46 +122,20 @@ function loadProgress() {
 }
 
 // 更新allQuestions数组，使其只包含未掌握的题目
-function updateAllQuestions() {
-  allQuestions = allQuestions.filter(
-    (question) => !correctAnswers[question.question]
-  );
-}
+// function updateAllQuestions() {
+//   allQuestions = allQuestions.filter(
+//     (question) => !correctAnswers[question.question]
+//   );
+// }
 
 // 启动计时器
 function startTimer() {
-  timeRemaining = 30;
-  if (!timerRunning) {
-    timerRunning = true;
-    timerInterval = setInterval(() => {
-      if (timeRemaining > 0) {
-        timeRemaining--;
-        updateTimerDisplay();
-      } else {
-        restartTimer();
-        correctAnswer = generateQuestion();
-      }
-    }, 1000);
-  }
-}
-
-// 更新计时器显示
-function updateTimerDisplay() {
-  // 获取计时器显示元素
-  const timerDisplay = document.getElementById("timer");
-  let minutes = Math.floor(timeRemaining / 60);
-  let seconds = timeRemaining % 60;
-  timerDisplay.textContent = `${minutes.toString().padStart(2, "0")}:${seconds
-    .toString()
-    .padStart(2, "0")}`;
+  document.querySelector("timer-component").startTimer();
 }
 
 // 停止计时器
 function stopTimer() {
-  clearInterval(timerInterval);
-  timerRunning = false;
-  timeRemaining = 30; // 重置时间
-  updateTimerDisplay();
+  document.querySelector("timer-component").stopTimer();
 }
 
 function restartTimer() {
@@ -238,22 +154,16 @@ function reloadData() {
 
   loadProgress(); // 页面加载时加载保存的进度
 
-  correctAnswers = examMode
-    ? userAnswers.exam.correctAnswers
-    : userAnswers.practice.correctAnswers;
+  answers = examMode ? userAnswers.exam.answers : userAnswers.practice.answers;
 
-  answers = examMode
-    ? userAnswers.exam.answers
-    : userAnswers.practice.answers;
-  
-  console.log("userAnswers in reloadData:", userAnswers)
+  console.log("userAnswers in reloadData:", userAnswers);
   console.log("answers in reloadData:", answers);
 
   document
     .querySelector("multiplication-table")
     .setAttribute("answers", JSON.stringify(answers));
 
-  updateAllQuestions(); // 更新题目列表，移除已掌握的题目
+  // updateAllQuestions(); // 更新题目列表，移除已掌握的题目
   updateProgressBar();
   correctAnswer = generateQuestion();
 }
@@ -271,70 +181,26 @@ document.addEventListener("DOMContentLoaded", function () {
     examModeButton.textContent = examMode ? "Exit Exam Mode" : "Exam Mode";
 
     timerDisplay.classList.toggle("d-none", !examMode);
-    // fingersDisplay.classList.toggle("d-none", examMode);
     document
       .querySelector("fingers-display")
       .classList.toggle("d-none", examMode);
 
-    // console.log("userAnswers in exam-mode change:", userAnswers);
-    correctAnswers = examMode
-      ? userAnswers.exam.correctAnswers
-      : userAnswers.practice.correctAnswers;
-
-    answers = examMode ? userAnswers.exam.answers : userAnswers.practice.answers;
-    console.log("answers in exam-mode change:", answers);
-    // console.log("correctAnswers in exam-mode change:", correctAnswers);
+    answers = examMode
+      ? userAnswers.exam.answers
+      : userAnswers.practice.answers;
+    // console.log("answers in exam-mode change:", answers);
 
     reloadData();
     restartTimer();
   });
 
-  recognition.onresult = function (event) {
-    const transcript = Array.from(event.results)
-      .map((result) => result[0])
-      .map((result) => result.transcript)
-      .join("");
-
-    console.log("Transcript:", transcript);
-
-    // 提取数字
-    const numbers = transcript.match(/\d+/g);
-    if (numbers) {
-      console.log("Transcript numbers:", numbers);
-      // 将提取到的数字转换为整数并连接起来
-      const numericInput = numbers[numbers.length - 1];
-      answerInput.value += numericInput;
-
-      console.log("answerInput.value:", answerInput.value);
-
-      // 如果输入框中有完整的数字，则提交答案
-      if (numericInput.trim().length > 0) {
-        submitBtn.click();
-      }
-    }
-
-    // 检查整个文本是否为数字
-    // if (/^\d+$/.test(transcript)) {
-    //     answerInput.value += transcript;
-
-    //     // 如果输入框中有完整的数字，则提交答案
-    //     if (transcript.trim().length > 0) {
-    //         submitBtn.click();
-    //     }
-    // }
-  };
-
-  recognition.onend = function () {
-    console.log("Recognition ended");
-    // recognition.start();
-    // console.log('Recognition started');
-  };
-
   const btnSkip = document.querySelector("#skipBtn");
   btnSkip.addEventListener("click", () => {
     console.log("Question when Skip button clicked:", question);
     answers[question] = false;
-    document.querySelector("multiplication-table").setAttribute("answers", JSON.stringify(answers));
+    document
+      .querySelector("multiplication-table")
+      .setAttribute("answers", JSON.stringify(answers));
     saveProgress();
     correctAnswer = generateQuestion();
     restartTimer();
@@ -347,7 +213,7 @@ document.addEventListener("DOMContentLoaded", function () {
       localStorage.removeItem("userAnswers"); // 清除localStorage中的数据
 
       // 更新题目列表，确保所有题目都可以再次出现
-      updateAllQuestions();
+      // updateAllQuestions();
 
       // 刷新页面
       location.reload();
@@ -357,34 +223,30 @@ document.addEventListener("DOMContentLoaded", function () {
   // Listen for answer events
   calculator.addEventListener("correctAnswer", (event) => {
     console.log("Correct answer event:", event.detail);
-    correctAnswers[event.detail.question] = true;
+  });
 
-    // document
-    //   .querySelector("multiplication-table")
-    //   .setAttribute("correct-answers", JSON.stringify(correctAnswers));
+  calculator.addEventListener("wrongAnswer", (event) => {
+    // Handle wrong answer
+    console.log(
+      "Wrong answer:",
+      event.detail.question,
+      "=",
+      event.detail.answer
+    );
+  });
+
+  calculator.addEventListener("answer", (event) => {
+    // console.log("answers in main when answer event got:", answers)
+    // console.log("answer:", event.detail.question, "=", event.detail.result);
+    answers[event.detail.question] = event.detail.result;
+    document
+      .querySelector("multiplication-table")
+      .setAttribute("answers", JSON.stringify(answers));
 
     updateProgressBar();
     saveProgress(); // 正确回答后保存进度
 
     correctAnswer = generateQuestion();
-    // Update learning progress and status display
-    // updateLearningProgress(event.detail.answer);
-    // tableStatus.setAttribute('status', JSON.stringify(getLearningStatus()));
-  });
-
-  calculator.addEventListener("wrongAnswer", (event) => {
-    // Handle wrong answer
-    console.log("Wrong answer:", event.detail.question, "=", event.detail.answer);
-  });
-
-  calculator.addEventListener("answer", (event) => {
-    console.log("answers in main when answer event got:", answers)
-    console.log("answer:", event.detail.question, "=", event.detail.result);
-    answers[event.detail.question] = event.detail.result;
-    saveProgress();
-    document
-    .querySelector("multiplication-table")
-    .setAttribute("answers", JSON.stringify(answers));
   });
 
   document
