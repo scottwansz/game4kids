@@ -5,7 +5,7 @@ game for kids to learn math
 - [ ] Register and login
 - [x] Learning multiplication table
 - [x] Practice mode
-- [ ] Exame mode
+- [x] Exame mode
 - [ ] Timer
 - [x] Complete percentage of the game
 - [ ] Leaderboard
